@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name" translatable="false">Pong</string>
+    <string name="btnNewGame">New Game</string>
+    <string name="pongBall"></string>
+    <string name="paddleLeft"></string>
+    <string name="paddleRight"></string>
+</resources>
