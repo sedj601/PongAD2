@@ -1,19 +1,24 @@
 package sed.krappy.games.pong;
 
+import android.annotation.SuppressLint;
+import android.graphics.Rect;
 import android.os.AsyncTask;
 import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 
 import java.security.Key;
 import java.text.DecimalFormat;
+import java.util.HashSet;
+import java.util.Set;
 
-public class MainActivity extends AppCompatActivity  implements View.OnKeyListener {
+public class MainActivity extends AppCompatActivity {
 
     // desired fps
     private final static int    MAX_FPS = 50;
@@ -47,33 +52,47 @@ public class MainActivity extends AppCompatActivity  implements View.OnKeyListen
     // the average FPS since the game started
     private double  averageFps = 0.0;
 
+    int ballXDirection = 1;
+    int ballYDirection = 1;
+    int ballXSpeed = 20;
+    int ballYSpeed = 20;
+    float maxBounceAngle = (float)( 5 * Math.PI / 12);
+    float bounceAngle = 0;
+
+    PongAIPlayer leftPlayer, rightPlayer;
 
     AsyncTask asyncTask;
     Runnable runnable;
     boolean running;
 
     Thread gameThread;
-    ImageView ivBall, ivPaddleLeft, ivPaddleRight;
+    ImageView ivBall, ivPaddleLeft, ivPaddleRight, ivUpArrow, ivDownArrow;
     Button btnNewGame;
-    ConstraintLayout clMain;
+    ConstraintLayout clMain, clField;
+    Set<String> inputs;
 
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+
         clMain = findViewById(R.id.clMain);
+        clField = findViewById(R.id.clField);
         btnNewGame = findViewById(R.id.btnNewGame);
         ivBall = findViewById(R.id.ivBall);
         ivPaddleLeft = findViewById(R.id.ivPaddleLeft);
         ivPaddleRight = findViewById(R.id.ivPaddleRight);
+        ivUpArrow = findViewById(R.id.ivUpArrow);
+        ivDownArrow = findViewById(R.id.ivDownArrow);
+
+        leftPlayer = new PongAIPlayer(ivPaddleLeft);
+        rightPlayer = new PongAIPlayer(ivPaddleRight);
+
         running = false;
-
-
-        ivPaddleRight.setOnKeyListener(this);
-        ivPaddleLeft.setOnKeyListener(this);
-        clMain.setOnKeyListener(this);
+        inputs = new HashSet();
 
         runnable = new Runnable() {
             @Override
@@ -88,7 +107,9 @@ public class MainActivity extends AppCompatActivity  implements View.OnKeyListen
                             beginTime = System.currentTimeMillis();
                             framesSkipped = 0;
 
-                            ivBall.setX(ivBall.getX() + 5);
+                            moveBall();
+                            //movePaddles();
+                            aiPaddlesMove();
 
                             timeDiff = System.currentTimeMillis() - beginTime;
                             sleepTime = (int) ((1000 / 50) - timeDiff);
@@ -96,9 +117,9 @@ public class MainActivity extends AppCompatActivity  implements View.OnKeyListen
                                 try {
                                     Thread.sleep(sleepTime);
                                 } catch (InterruptedException ex) {
-                                    Log.d("MainActivity", ex.toString());
+                                    //Log.d("MainActivity", ex.toString());
                                     //Log.d("",Integer.toString(framesSkipped));
-                                    Log.d("MainActivity", "Thread shutting down as it was requested to stop.");
+                                    //Log.d("MainActivity", "Thread shutting down as it was requested to stop.");
                                 }
 //                        finally {
 //                            gameThread = null;
@@ -128,17 +149,16 @@ public class MainActivity extends AppCompatActivity  implements View.OnKeyListen
         };
 
 
+
         btnNewGame.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if(!running) {
                     if(gameThread == null) {
-                        Log.d("MainActivity", "Here");
                         gameThread = new Thread(runnable);
                         gameThread.start();
                         running  = true;
                         btnNewGame.setText("Stop");
-                        Log.d("MainActivity", "New Game Pressed!");
                     }
                 }
                  else if(running){
@@ -146,25 +166,120 @@ public class MainActivity extends AppCompatActivity  implements View.OnKeyListen
                         gameThread.interrupt();
                         running = false;
                         btnNewGame.setText("End of Game");
-                        Log.d("MainActivity", "Pause Pressed!");
                     }
                 }
             }
         });
 
+        ivUpArrow.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent arg1) {
+                if (arg1.getAction() == MotionEvent.ACTION_DOWN) {
+                    inputs.add("UP_ARROW_PRESSED");
+                }
+                else if(arg1.getAction() == MotionEvent.ACTION_UP){
+                    inputs.remove("UP_ARROW_PRESSED");
+                }
+
+                return true;
+            }
+        });
+
+        ivDownArrow.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent arg1) {
+                if (arg1.getAction() == MotionEvent.ACTION_DOWN) {
+                    inputs.add("DOWN_ARROW_PRESSED");
+                }
+                else if(arg1.getAction() == MotionEvent.ACTION_UP){
+                    inputs.remove("DOWN_ARROW_PRESSED");
+                }
+
+                return true;
+            }
+        });
 
     }
 
-    @Override
-    public boolean onKey(View view, int keyCode, KeyEvent keyEvent)
+    private void aiPaddlesMove()
     {
-        Log.d("MainActivity", "keycode: " + keyCode);
-        Log.d("MainActivity", "KeyEvent: " + keyEvent.getKeyCode());
-        if(keyCode == KeyEvent.KEYCODE_A)
-        {
-            Log.d("MainActivity", "Up Pressed!");
+        if (ballXDirection < 0) {
+            leftPlayer.MovePaddle(true, ivBall.getX(), ivBall.getY() + (ivBall.getHeight() / 2));
+            rightPlayer.MovePaddle(false,  ivBall.getX(), ivBall.getY() + (ivBall.getHeight() / 2));
+        }
+        else {
+            leftPlayer.MovePaddle(false,  ivBall.getX(), ivBall.getY() + (ivBall.getHeight() / 2));
+            rightPlayer.MovePaddle(true,  ivBall.getX(), ivBall.getY() + (ivBall.getHeight() / 2));
+        }
+    }
+
+    public void movePaddles()
+    {
+        if(inputs.contains("UP_ARROW_PRESSED")){
+            ivPaddleLeft.setY(ivPaddleLeft.getY() - 10);
+        }
+        else if(inputs.contains("DOWN_ARROW_PRESSED")){
+            ivPaddleLeft.setY(ivPaddleLeft.getY() + 10);
         }
 
-        return true;
+
     }
+
+    public void checkPaddleCollision()
+    {
+        //Log.d("MainActivity",clField.getWidth() + "");
+        Rect rectBall = new Rect();
+        ivBall.getHitRect(rectBall);
+        Rect rectPaddleLeft = new Rect();
+        ivPaddleLeft.getHitRect(rectPaddleLeft);
+        Rect rectPaddleRight = new Rect();
+        ivPaddleRight.getHitRect(rectPaddleRight);
+
+        if(Rect.intersects(rectBall, rectPaddleRight))
+        {
+            ballXDirection *= -1;
+            double paddleIntersectY = (ivBall.getY() + (ivBall.getHeight() / 2)) - ivPaddleRight.getY();
+            double relativeIntersectY = paddleIntersectY - (ivPaddleRight.getHeight() / 2);
+            double normalizedRelativeIntersectionY = relativeIntersectY / (ivPaddleRight.getHeight() / 2);
+            bounceAngle = (float)(normalizedRelativeIntersectionY * maxBounceAngle);
+
+        }
+        else if(Rect.intersects(rectBall, rectPaddleLeft))
+        {
+            ballXDirection *= -1;
+            double paddleIntersectY = (ivBall.getY() + (ivBall.getHeight() / 2)) - ivPaddleLeft.getY();
+            double relativeIntersectY = paddleIntersectY - (ivPaddleLeft.getHeight() / 2);
+            double normalizedRelativeIntersectionY = relativeIntersectY / (ivPaddleLeft.getHeight() / 2);
+            bounceAngle = (float)(normalizedRelativeIntersectionY * maxBounceAngle);
+        }
+    }
+
+    public void checkWallCollision()
+    {
+        if(ivBall.getY() <= clField.getY()) {
+            ballYDirection *= -1;
+        }
+        else if(ivBall.getY() + ivBall.getHeight() >= clField.getY() + clField.getHeight()){
+            ballYDirection *= -1;
+        }
+        else if(ivBall.getX() <= ivPaddleLeft.getX())
+        {
+            //Todo player score!
+            gameThread.interrupt();
+        }
+        else if(ivBall.getX() + ivBall.getWidth() >= ivPaddleRight.getX() + ivPaddleRight.getWidth()){
+            //Todo player score!
+            gameThread.interrupt();
+        }
+    }
+
+    public void moveBall()
+    {
+        ivBall.setX((float) (ivBall.getX() + (ballXDirection * ballXSpeed * Math.cos(bounceAngle))));
+        ivBall.setY((float)( ivBall.getY() + (ballYDirection * ballYSpeed * -Math.sin(bounceAngle))));
+        Log.d("MainActivity",ivBall.getX() + " - " + ivBall.getY() + " - " + (clField.getY() + clField.getHeight()));
+        checkPaddleCollision();
+        checkWallCollision();
+    }
+
 }
