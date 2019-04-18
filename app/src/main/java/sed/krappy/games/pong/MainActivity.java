@@ -45,6 +45,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        getSupportActionBar().hide();
 
 
         clMain = findViewById(R.id.clMain);
@@ -74,8 +75,9 @@ public class MainActivity extends AppCompatActivity {
                     while(System.currentTimeMillis() > next_game_tick && loops < MAX_FRAME_SKIPS)
                     {
                         moveBall();
-                        //movePaddles();
+                        movePaddles();
                         aiPaddlesMove();
+                        checkIfScored();
 
                         next_game_tick += SKIP_TICKS;
                         loops++;
@@ -139,6 +141,11 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    public void checkIfScored()
+    {
+
+    }
+
     public void moveBall()
     {
         ivBall.setX((float) (ivBall.getX() + (ballXDirection * ballXSpeed * Math.cos(bounceAngle))));
@@ -151,11 +158,11 @@ public class MainActivity extends AppCompatActivity {
     public void aiPaddlesMove()
     {
         if (ballXDirection < 0) {
-            leftPlayer.MovePaddle(true, ivBall.getX(), ivBall.getY() + (ivBall.getHeight() / 2));
+            //leftPlayer.MovePaddle(true, ivBall.getX(), ivBall.getY() + (ivBall.getHeight() / 2));
             rightPlayer.MovePaddle(false,  ivBall.getX(), ivBall.getY() + (ivBall.getHeight() / 2));
         }
         else {
-            leftPlayer.MovePaddle(false,  ivBall.getX(), ivBall.getY() + (ivBall.getHeight() / 2));
+           // leftPlayer.MovePaddle(false,  ivBall.getX(), ivBall.getY() + (ivBall.getHeight() / 2));
             rightPlayer.MovePaddle(true,  ivBall.getX(), ivBall.getY() + (ivBall.getHeight() / 2));
         }
     }
