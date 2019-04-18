@@ -54,7 +54,7 @@
         <ImageView
             android:id="@+id/ivPaddleLeft"
             android:layout_width="10dp"
-            android:layout_height="70dp"
+            android:layout_height="40dp"
             android:layout_marginStart="16dp"
             android:background="@drawable/paddle"
             android:contentDescription="@string/paddleLeft"
@@ -65,7 +65,7 @@
         <ImageView
             android:id="@+id/ivPaddleRight"
             android:layout_width="10dp"
-            android:layout_height="70dp"
+            android:layout_height="40dp"
             android:layout_marginEnd="16dp"
             android:background="@drawable/paddle"
             android:contentDescription="@string/paddleRight"
