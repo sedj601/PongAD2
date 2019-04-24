@@ -4,4 +4,8 @@
     <string name="pongBall"></string>
     <string name="paddleLeft"></string>
     <string name="paddleRight"></string>
+    <string name="lblPlayerScore">Player Score</string>
+    <string name="lblCpuScore">Computer Score</string>
+    <string name="playerScore">0</string>
+    <string name="cpuScore">0</string>
 </resources>

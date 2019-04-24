@@ -18,7 +18,7 @@ public class PongAIPlayer
     public PongAIPlayer(ImageView paddle)
     {
         this.paddle = paddle;
-        ySpeed = 12;
+        ySpeed = 17;
     }
 
     public void MovePaddle(boolean isBallComingAtPaddle, double ballLocationX, double ballLocationY)
