@@ -53,7 +53,6 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         getSupportActionBar().hide();
 
-
         clMain = findViewById(R.id.clMain);
         clField = findViewById(R.id.clField);
         btnNewGame = findViewById(R.id.btnNewGame);
@@ -75,37 +74,28 @@ public class MainActivity extends AppCompatActivity {
         
         layoutParams = (ConstraintLayout.LayoutParams)clField.getLayoutParams();
         handler = new Handler();
-        runnable = new Runnable() {
-            @Override
-            public void run() {
-                double next_game_tick = System.currentTimeMillis();
-                int loops;
+        runnable = () -> {
+            double next_game_tick = System.currentTimeMillis();
+            int loops;
 
-                while (running)
+            while (running)
+            {
+                loops = 0;
+                while(System.currentTimeMillis() > next_game_tick && loops < MAX_FRAME_SKIPS)
                 {
-                    loops = 0;
-                    while(System.currentTimeMillis() > next_game_tick && loops < MAX_FRAME_SKIPS)
-                    {
-                        moveBall();
-                        movePaddles();
-                        aiPaddlesMove();
-                        checkIfScored();
+                    moveBall();
+                    movePaddles();
+                    aiPaddlesMove();
+                    checkIfScored();
 
-                        next_game_tick += SKIP_TICKS;
-                        loops++;
-                    }
-
-                    interpolation = System.currentTimeMillis() + SKIP_TICKS - next_game_tick  / (double)SKIP_TICKS;
+                    next_game_tick += SKIP_TICKS;
+                    loops++;
                 }
+
+                interpolation = System.currentTimeMillis() + SKIP_TICKS - next_game_tick  / (double)SKIP_TICKS;
             }
         };
-
-
-
-
     }
-
-
 
     public void moveBall()
     {
@@ -270,6 +260,5 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             }
         });
-
     }
 }
